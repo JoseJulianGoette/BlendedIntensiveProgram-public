@@ -1,0 +1,8 @@
+# Plan analysis (scan_plan_htw_api_v5-v7) and local frontend (app.py)
+openai
+pillow
+pydantic
+pypdfium2
+openpyxl
+rapidfuzz
+python-dotenv

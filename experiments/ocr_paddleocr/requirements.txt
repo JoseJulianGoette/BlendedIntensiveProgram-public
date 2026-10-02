@@ -1,0 +1,7 @@
+# CPU-only dependencies for the PaddleOCR course example.
+# The extra package index is required for the official PaddlePaddle CPU wheel.
+--extra-index-url https://www.paddlepaddle.org.cn/packages/stable/cpu/
+
+Pillow
+paddlepaddle==3.2.0
+paddleocr

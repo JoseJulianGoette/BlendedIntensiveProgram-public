@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planarchiv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Design language of bvg.de: yellow, white rounded cards,
+     bold sans headlines, coloured status tags.
+     The official BVG logo and Transit typeface are not included. */
+  :root {
+    --yellow: #F0D722;
+    --yellow-dark: #D9C11A;
+    --text: #222222;
+    --text-soft: #555555;
+    --grey-bg: #F2F2F2;
+    --grey-btn: #E3E3E3;
+    --line: #D9D9D9;
+    --white: #FFFFFF;
+    --blue: #2B4DA3;
+    --blue-bg: #E2EAF6;
+    --red: #C62828;
+    --red-bg: #FCE4E2;
+    --tag-grey-bg: #E6E6E6;
+
+    /* Traffic light: orange instead of yellow, so it never
+       looks like the BVG brand yellow */
+    --green: #2E8B3D;
+    --green-bg: #E1F1E3;
+    --amber: #F29400;
+    --amber-bg: #FFEFD6;
+    --amber-text: #8A5300;
+    --none: #9A9A9A;
+
+    --radius-card: 16px;
+    --radius-ctrl: 8px;
+    --shadow: 0 2px 10px rgba(0, 0, 0, .10);
+    --font: "Fira Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--white);
+    color: var(--text);
+    font: 400 17px/1.5 var(--font);
+  }
+
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top: yellow band with floating header ---------- */
+
+  .band {
+    background: var(--yellow);
+    padding: 24px 0 0;
+  }
+
+  .header {
+    background: var(--white);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .wordmark { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+
+  .header nav { margin-left: auto; display: flex; gap: 28px; }
+  .header nav a { color: var(--text); font-weight: 600; text-decoration: none; }
+  .header nav a:hover, .header nav a[aria-current] { text-decoration: underline; text-underline-offset: 4px; }
+  .header nav a.disabled { color: var(--none); pointer-events: none; }
+
+  .hero {
+    padding: 44px 0 36px;
+    max-width: 820px;
+  }
+
+  .hero p { margin: 0 0 6px; font-size: 19px; }
+  .hero h2 { margin: 0; font-size: 42px; line-height: 1.12; font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+
+  /* Folder strip, laid out like "Start / Ziel / Verbindung finden" */
+  .strip {
+    background: var(--white);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    padding: 28px 32px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    margin-bottom: -1px;
+  }
+
+  .field-input {
+    width: 100%;
+    min-width: 0;
+    border: 1.5px solid #8C8C8C;
+    border-radius: var(--radius-ctrl);
+    padding: 14px 18px;
+    font-size: 19px;
+    background: var(--white);
+  }
+
+  .field-input:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 1px var(--blue); }
+  .field-input::placeholder { color: #767676; }
+
+  .btn {
+    border: 0;
+    border-radius: var(--radius-ctrl);
+    padding: 14px 26px;
+    font-weight: 600;
+    font-size: 18px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .btn-yellow { background: var(--yellow); }
+  .btn-yellow:hover { background: var(--yellow-dark); }
+  .btn-grey { background: var(--grey-btn); }
+  .btn-grey:hover { background: #D5D5D5; }
+  .btn:disabled { opacity: .5; cursor: default; }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1.5px solid var(--text);
+    border-radius: var(--radius-ctrl);
+    padding: 9px 18px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    background: var(--white);
+  }
+
+  .btn-outline:hover { background: var(--grey-bg); }
+
+  /* ---------- notice box (status) ---------- */
+
+  main { padding: 32px 0 72px; }
+
+  .notice {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 24px 32px;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 4px 18px;
+    margin-bottom: 36px;
+  }
+
+  .notice .icon {
+    width: 44px; height: 44px;
+    background: var(--yellow);
+    border-radius: 6px;
+    display: grid; place-items: center;
+    font: 700 26px/1 Georgia, serif;
+    grid-row: span 3;
+  }
+
+  .notice h3 { margin: 0; font-size: 24px; font-weight: 600; align-self: center; }
+  .notice p { margin: 0; }
+  .notice .err { color: var(--red); font-weight: 600; }
+
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--grey-bg);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .progress span { display: block; height: 100%; width: 0; background: var(--yellow); transition: width .4s ease; }
+
+  .notice a { color: var(--blue); }
+  .notice-actions { grid-column: 2; margin-top: 6px !important; }
+
+  /* ---------- plan card ---------- */
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 36px 44px 40px;
+  }
+
+  .card-head { display: flex; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .card-head h2 { margin: 0; font-size: 36px; line-height: 1.1; font-weight: 700; }
+  .card-head p { margin: 4px 0 0; font-size: 20px; }
+  .card-head .btn-outline { margin-left: auto; }
+
+  /* search like the bvg.de search overlay */
+  .search {
+    position: relative;
+  }
+
+  .search input {
+    width: 100%;
+    background: var(--grey-bg);
+    border: 2px solid transparent;
+    border-radius: var(--radius-ctrl);
+    padding: 16px 70px 16px 20px;
+    font-size: 20px;
+  }
+
+  .search input:focus { border-color: var(--blue); background: var(--white); outline: none; }
+  .search input::placeholder { color: #6E6E6E; }
+  .search input:disabled { opacity: .6; }
+
+  .search .go {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    width: 46px; height: 46px;
+    border-radius: 6px;
+    background: var(--yellow);
+    display: grid; place-items: center;
+    pointer-events: none;
+  }
+
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin: 18px 0 8px;
+    color: var(--text-soft);
+    font-size: 16px;
+  }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--white);
+    border-radius: 999px;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .chip:hover { border-color: var(--text); }
+  .chip[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--white); }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: var(--amber); }
+  .dot.red { background: var(--red); }
+  .dot.none { background: var(--none); }
+
+  .tools select {
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-ctrl);
+    padding: 5px 8px;
+    background: var(--white);
+    color: var(--text);
+  }
+
+  .tools .count { margin-left: auto; }
+
+  /* ---------- rows, like the "Baumaßnahmen & Störungen" list ---------- */
+
+  .list { list-style: none; margin: 0; padding: 0; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 20px 1fr auto 32px;
+    gap: 18px;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 20px 4px;
+    cursor: pointer;
+  }
+
+  .list li:first-child .row { border-top: 1px solid var(--line); }
+  .row:hover .place { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* signal head: one lamp lit */
+  .signal {
+    width: 18px;
+    padding: 3px 0;
+    background: #333;
+    border-radius: 5px;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+  }
+
+  .signal i { width: 11px; height: 11px; border-radius: 50%; background: #5A5A5A; }
+  .signal[data-level="red"] i:nth-child(1) { background: var(--red); }
+  .signal[data-level="yellow"] i:nth-child(2) { background: var(--amber); }
+  .signal[data-level="green"] i:nth-child(3) { background: var(--green); }
+
+  .line1 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+
+  .place { font-size: 21px; font-weight: 700; line-height: 1.25; }
+  .place.empty { font-weight: 500; color: var(--none); font-style: italic; }
+
+  .title { margin: 4px 0 0; color: var(--text-soft); max-width: 70ch; }
+  .title.empty { color: var(--none); font-style: italic; }
+
+  .tag {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .tag.green { background: var(--green-bg); color: var(--green); }
+  .tag.yellow { background: var(--amber-bg); color: var(--amber-text); }
+  .tag.red { background: var(--red-bg); color: var(--red); }
+  .tag.none { background: var(--tag-grey-bg); color: var(--text-soft); }
+  .tag.flag { background: var(--tag-grey-bg); color: var(--text); }
+  .tag.why { background: var(--blue-bg); color: var(--blue); }
+
+  .meta { text-align: right; font-size: 15px; color: var(--text-soft); display: grid; justify-items: end; }
+  .meta .file { max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .info {
+    width: 28px; height: 28px;
+    border: 2px solid var(--text);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font: 700 16px/1 Georgia, serif;
+  }
+
+  .empty-state { padding: 36px 0 8px; }
+  .empty-state strong { display: block; font-size: 24px; margin-bottom: 4px; }
+  .empty-state p { margin: 0; color: var(--text-soft); }
+
+  /* ---------- popup ---------- */
+
+  dialog {
+    border: 0;
+    padding: 0;
+    width: min(1300px, 96vw);
+    height: min(900px, 94vh);
+    border-radius: var(--radius-card);
+    background: var(--white);
+    color: var(--text);
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+  }
+
+  dialog::backdrop { background: rgba(0, 0, 0, .55); }
+  dialog[open] { animation: open .18s ease-out; }
+  @keyframes open { from { opacity: 0; transform: translateY(8px); } }
+
+  .viewer { display: grid; grid-template-columns: 1fr 400px; height: 100%; }
+
+  .image-wrap { position: relative; min-height: 0; }
+
+  .image-pane { position: absolute; inset: 0; background: var(--grey-bg); overflow: auto; display: grid; place-items: center; }
+  .image-pane img { max-width: 100%; max-height: 100%; display: block; cursor: zoom-in; background: var(--white); }
+  .image-pane.zoomed { place-items: start; }
+  /* 1 image pixel = 1 CSS pixel: the plan in original resolution */
+  .image-pane.zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+  .image-pane .loading { color: var(--text-soft); }
+
+  .resolution {
+    position: absolute; left: 12px; bottom: 12px;
+    background: rgba(255, 255, 255, .92);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 14px;
+    color: var(--text-soft);
+    pointer-events: none;
+  }
+
+  .details { padding: 24px 28px; overflow: auto; display: flex; flex-direction: column; gap: 18px; }
+
+  .details .close-row { display: flex; justify-content: flex-end; }
+
+  .close {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: none; border: 0; padding: 4px 0;
+    font-weight: 600; text-decoration: underline; text-underline-offset: 4px;
+    cursor: pointer;
+  }
+
+  .details h2 { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 700; }
+
+  .field { border-top: 1px solid var(--line); padding-top: 12px; }
+  .field .label { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text-soft); }
+  .field .value { margin: 4px 0 0; font-size: 17px; }
+
+  /* edit form */
+  .edit { border: 0; margin: 0; padding: 14px 0 0; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+  /* float: takes the legend out of the border line, so it sits below the divider */
+  .edit legend { float: left; width: 100%; padding: 0; font-weight: 600; font-size: 18px; }
+  .edit legend + * { clear: both; }
+  .edit input[type="text"], .edit textarea {
+    width: 100%;
+    border: 1.5px solid #8C8C8C;
+    border-radius: var(--radius-ctrl);
+    padding: 9px 12px;
+    font-size: 17px;
+    resize: vertical;
+  }
+  .edit input[type="text"]:focus, .edit textarea:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 1px var(--blue); }
+
+  .lights { position: relative; display: flex; gap: 6px; flex-wrap: wrap; }
+  .lights input { position: absolute; opacity: 0; pointer-events: none; }
+  .lights label {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-size: 15px; font-weight: 500;
+    cursor: pointer;
+  }
+  .lights input:checked + label { border-color: var(--text); background: var(--text); color: var(--white); }
+  .lights input:focus-visible + label { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+  .model-read { font-size: 14px; color: var(--text-soft); margin: 0; }
+  .model-read q { color: var(--text); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-top: 4px; }
+  .actions .btn { padding: 10px 18px; font-size: 16px; }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--blue); text-decoration: underline; cursor: pointer; font-size: 15px; }
+  .saved { font-size: 15px; color: var(--green); font-weight: 600; }
+
+  .hint { font-size: 14px; color: var(--text-soft); margin: 0; }
+
+  .nav { margin-top: auto; display: flex; gap: 10px; }
+  .nav .btn { padding: 10px 18px; font-size: 16px; }
+
+  @media (max-width: 860px) {
+    .wrap { padding: 0 16px; }
+    .header { padding: 14px 18px; flex-wrap: wrap; gap: 8px 16px; }
+    .header nav { margin-left: 0; }
+    .hero { padding: 28px 0 24px; }
+    .hero h2 { font-size: 32px; }
+    .strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 20px; }
+    .strip .field-input { grid-column: 1 / -1; }
+    .strip .btn { white-space: normal; padding: 12px 14px; }
+    .notice { padding: 18px 20px; }
+    .card { padding: 24px 18px 28px; }
+    .card-head h2 { font-size: 30px; }
+    .card-head .btn-outline { margin-left: 0; }
+    .row { grid-template-columns: 18px 1fr 28px; }
+    .meta { grid-column: 2; grid-row: 2; justify-items: start; text-align: left; }
+    .info { grid-column: 3; grid-row: 1; }
+    .tools .count { margin-left: 0; }
+    .viewer { grid-template-columns: 1fr; grid-template-rows: 45% 55%; }
+  }
+
+  @media (max-width: 480px) {
+    .strip { grid-template-columns: 1fr; }
+    .hero h2 { font-size: 28px; }
+    .notice { grid-template-columns: 36px 1fr; gap: 4px 12px; }
+    .notice .icon { width: 36px; height: 36px; font-size: 22px; }
+    .notice h3 { font-size: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="band">
+  <div class="wrap">
+    <header class="header">
+      <h1 class="wordmark">Planarchiv</h1>
+      <nav aria-label="Main menu">
+        <a href="#plaene" aria-current="page">Plans</a>
+        <a href="/api/export.xlsx" id="nav-excel" class="disabled">Download Excel</a>
+      </nav>
+    </header>
+
+    <div class="hero">
+      <p>Historic plans of the BVG</p>
+      <h2>The U-Bahn plans of the BVG archive, searchable by station and title.</h2>
+    </div>
+
+    <form class="strip" id="folder-form">
+      <input class="field-input" id="folder" type="text" placeholder="Folder with plans" aria-label="Folder with plans" autocomplete="off">
+      <button class="btn btn-yellow" type="submit" id="analyze">Open folder</button>
+      <button class="btn btn-grey" type="button" id="pick">Choose folder</button>
+    </form>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="notice" aria-live="polite">
+    <span class="icon" aria-hidden="true">i</span>
+    <h3 id="notice-title">How it works</h3>
+    <p id="status">Choose a folder with plans. New plans are analysed, plans analysed before are loaded from the saved results.</p>
+    <div class="progress" id="progress" hidden><span id="bar"></span></div>
+    <p class="notice-actions" id="notice-actions" hidden>
+      <button class="link-btn" type="button" id="reanalyse">Re-analyse all plans</button>
+    </p>
+  </section>
+
+  <section class="card" id="plaene">
+    <div class="card-head">
+      <div>
+        <h2>Plans</h2>
+        <p>Search by location or title, even with ß/ss, old spellings or typos</p>
+      </div>
+      <a class="btn-outline" id="excel" href="/api/export.xlsx" hidden><span aria-hidden="true">→</span> Download Excel</a>
+    </div>
+
+    <div class="search">
+      <input id="q" type="search" placeholder="Looking for …" aria-label="Search location or title" autocomplete="off" disabled>
+      <span class="go" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>
+      </span>
+    </div>
+
+    <div class="tools">
+      <div class="filters" role="group" aria-label="Filter by traffic light" id="filters"></div>
+      <label>Show
+        <select id="review-filter">
+          <option value="all">All plans</option>
+          <option value="open">Not reviewed</option>
+          <option value="reviewed">Reviewed</option>
+        </select>
+      </label>
+      <label>Sort by
+        <select id="sort">
+          <option value="file">File name</option>
+          <option value="level">Traffic light, uncertain first</option>
+        </select>
+      </label>
+      <span class="count" id="count"></span>
+    </div>
+
+    <ul class="list" id="list"></ul>
+    <div id="empty"></div>
+  </section>
+</main>
+
+<dialog id="viewer" aria-labelledby="d-title">
+  <div class="viewer">
+    <div class="image-wrap">
+      <div class="image-pane" id="image-pane">
+        <span class="loading" id="loading">Loading plan …</span>
+        <img id="image" alt="" hidden>
+      </div>
+      <span class="resolution" id="resolution" hidden></span>
+    </div>
+    <aside class="details">
+      <div class="close-row">
+        <button class="close" id="close" type="button"><span aria-hidden="true">✕</span> Close</button>
+      </div>
+      <h2 id="d-title"></h2>
+      <p class="model-read" id="d-status"></p>
+
+      <form id="edit-form" autocomplete="off">
+        <fieldset class="edit">
+          <legend>Location</legend>
+          <input type="text" id="f-location" aria-label="Location">
+          <div class="lights" role="radiogroup" aria-label="Traffic light for location" id="l-location"></div>
+          <p class="model-read" id="m-location"></p>
+        </fieldset>
+        <fieldset class="edit">
+          <legend>Title</legend>
+          <textarea id="f-title" rows="3" aria-label="Title"></textarea>
+          <div class="lights" role="radiogroup" aria-label="Traffic light for title" id="l-title"></div>
+          <p class="model-read" id="m-title"></p>
+        </fieldset>
+        <div class="actions">
+          <button class="btn btn-yellow" type="submit">Save</button>
+          <button class="btn btn-grey" type="button" id="save-next">Save and next</button>
+          <button class="link-btn" type="button" id="reset" hidden>Undo review</button>
+          <span class="saved" id="saved" role="status"></span>
+        </div>
+      </form>
+
+      <div id="d-fields"></div>
+      <p class="hint">Click the plan to switch between whole plan and original resolution. Arrow keys browse (outside text fields), Esc closes.</p>
+      <div class="nav">
+        <button class="btn btn-grey" id="prev" type="button">← Previous</button>
+        <button class="btn btn-grey" id="next" type="button">Next →</button>
+      </div>
+    </aside>
+  </div>
+</dialog>
+
+<script>
+const LEVELS = [
+  { key: "all", label: "All" },
+  { key: "green", label: "confident" },
+  { key: "yellow", label: "check" },
+  { key: "red", label: "uncertain" },
+];
+const LEVEL_WORD = { green: "confident", yellow: "check", red: "uncertain", none: "no rating" };
+const LEVEL_RANK = { red: 0, yellow: 1, none: 2, green: 3 };
+const API_VERSION = 10;   // must match API_VERSION in app.py
+const FIELDS = ["location", "title"];
+const FIELD_LABEL = { location: "location", title: "title" };
+const STATUS_WORD = { open: "not reviewed yet", confirmed: "reviewed", corrected: "corrected" };
+
+let state = { entries: [], running: false };
+let hits = null;          // null = no search; else [{filename, reason, field}]
+let filter = "all";
+let visible = [];         // entries currently in the list
+let currentName = null;   // filename shown in the popup
+let formSnapshot = "";    // form content when opened / saved -> unsaved changes?
+let pollTimer = null;
+let searchTimer = null;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const lvl = (c) => (c && c.level) || "none";
+const entryByName = (name) => state.entries.find((e) => e.filename === name);
+
+// ---------- server ----------
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
+}
+
+const post = (path, body) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+async function refresh() {
+  const data = await api("/api/state");
+  if (data.api !== API_VERSION) {
+    // page is newer than the running server: its data cannot be shown correctly
+    showStatus("Please restart the app",
+      "The running server is an older version of the app. Stop it in the terminal with Ctrl+C and start it again with python3 src/app.py, then reload this page.", true);
+    $("list").innerHTML = "";
+    return;
+  }
+  state = data;
+  if (state.folder && !$("folder").value) $("folder").value = state.folder;
+  renderStatus();
+  if (hits !== null) await runSearch();   // new entries may match
+  else render();
+  clearTimeout(pollTimer);
+  if (state.running) pollTimer = setTimeout(refresh, 1000);
+}
+
+async function startAnalysis(folder, mode = "new") {
+  if (!folder) { showStatus("Note", "Choose a folder first.", true); return; }
+  try {
+    await post("/api/analyze", { folder, mode });
+    $("q").value = ""; hits = null;
+    await refresh();
+  } catch (e) {
+    showStatus("Analysis not started", e.message, true);
+  }
+}
+
+async function runSearch() {
+  const q = $("q").value.trim();
+  if (!q) { hits = null; render(); return; }
+  const data = await api("/api/search?q=" + encodeURIComponent(q));
+  if (data.query.trim() !== $("q").value.trim()) return;   // outdated answer
+  hits = data.hits;
+  render();
+}
+
+// ---------- status ----------
+
+function showStatus(title, text, isError) {
+  $("notice-title").textContent = title;
+  $("status").innerHTML = isError ? `<span class="err">${esc(text)}</span>` : text;
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const versionOf = (script) => (script.match(/v\d+/) || [script])[0];
+
+function renderStatus() {
+  const { running, done, total, error, seconds, entries, folder, mode, loaded, pending, notes, outdated, script } = state;
+  $("progress").hidden = !running;
+  $("bar").style.width = total ? `${(done / total) * 100}%` : "0";
+  $("analyze").disabled = running;
+  $("pick").disabled = running;
+  $("q").disabled = entries.length === 0;
+  $("excel").hidden = !entries.length || running;
+  $("nav-excel").classList.toggle("disabled", !entries.length || running);
+  $("notice-actions").hidden = !folder || running;
+
+  if (!folder) return;
+
+  const reviewed = entries.filter((e) => e.review).length;
+  const parts = [];
+
+  if (notes.length) parts.push(`Taken over from the plan folder: ${notes.join(", ")}.`);
+
+  if (error) {
+    showStatus("Analysis stopped", `${error}. ${plural(entries.length, "plan")} from saved results are still shown.`, true);
+    return;
+  }
+
+  if (running) {
+    parts.unshift(mode === "all"
+      ? `Re-analysing all plans: ${done} of ${total} done.`
+      : `${plural(loaded, "plan")} loaded from saved results. Analysing ${plural(total, "new or changed plan")}: ${done} of ${total} done.`);
+    showStatus("Analysis running", esc(parts.join(" ")));
+    return;
+  }
+
+  if (pending === 0) parts.unshift(`${plural(entries.length, "plan")} loaded from saved results. No new or changed plans to analyse.`);
+  else if (mode === "all") parts.unshift(`All ${plural(pending, "plan")} analysed again in ${Math.round(seconds)} s.`);
+  else parts.unshift(`${plural(loaded, "plan")} loaded from saved results, ${plural(pending, "new or changed plan")} analysed in ${Math.round(seconds)} s.`);
+
+  parts.push(`${reviewed} reviewed.`);
+
+  if (outdated) {
+    parts.push(`${plural(outdated, "plan")} ${outdated === 1 ? "was" : "were"} analysed with an older version; “Re-analyse all plans” updates them to ${versionOf(script)}.`);
+  }
+
+  showStatus(pending === 0 ? "Plans loaded" : "Analysis finished", esc(parts.join(" ")));
+}
+
+// ---------- list ----------
+
+function counts(list) {
+  const c = { all: list.length, green: 0, yellow: 0, red: 0 };
+  list.forEach((e) => { if (e.overall_level) c[e.overall_level]++; });
+  return c;
+}
+
+function renderFilters(base) {
+  const c = counts(base);
+  $("filters").innerHTML = LEVELS.map((l) => `
+    <button class="chip" type="button" data-level="${l.key}" aria-pressed="${filter === l.key}">
+      ${l.key === "all" ? "" : `<span class="dot ${l.key}"></span>`}${l.label} ${c[l.key]}
+    </button>`).join("");
+}
+
+function render() {
+  const byName = new Map(state.entries.map((e) => [e.filename, e]));
+  let base;
+
+  if (hits === null) {
+    base = [...state.entries];
+    if ($("sort").value === "level") {
+      base.sort((a, b) => LEVEL_RANK[a.overall_level || "none"] - LEVEL_RANK[b.overall_level || "none"]);
+    }
+  } else {
+    base = hits.map((h) => ({ ...byName.get(h.filename), hit: h })).filter((e) => e.filename);
+  }
+
+  const review = $("review-filter").value;
+  if (review === "open") base = base.filter((e) => !e.review);
+  if (review === "reviewed") base = base.filter((e) => e.review);
+
+  renderFilters(base);
+  visible = filter === "all" ? base : base.filter((e) => e.overall_level === filter);
+
+  $("count").textContent = hits === null
+    ? `${visible.length} of ${state.entries.length} plans`
+    : `${visible.length} ${visible.length === 1 ? "result" : "results"}`;
+
+  $("list").innerHTML = visible.map(rowHtml).join("");
+  renderEmpty();
+}
+
+function rowHtml(e, i) {
+  const v = e.values || {};
+  const level = e.overall_level || "none";
+  const tags = [
+    `<span class="tag ${level}">${LEVEL_WORD[level]}</span>`,
+    e.review ? `<span class="tag why">${STATUS_WORD[e.review_status]}</span>` : "",
+    ...(e.filename_flags || []).map((f) => `<span class="tag flag">${esc(f)}</span>`),
+    e.error && !e.review ? `<span class="tag red">unreadable</span>` : "",
+    e.hit ? `<span class="tag why">${esc(e.hit.reason)} in ${FIELD_LABEL[e.hit.field]}</span>` : "",
+  ].join("");
+
+  return `<li><button class="row" type="button" data-name="${esc(e.filename)}">
+    <span class="signal" data-level="${level}" role="img" aria-label="Traffic light: ${LEVEL_WORD[level]}"><i></i><i></i><i></i></span>
+    <span>
+      <span class="line1">
+        <span class="place ${v.location ? "" : "empty"}">${esc(v.location || "No location found")}</span>
+        ${tags}
+      </span>
+      <p class="title ${v.title ? "" : "empty"}">${esc(v.title || "No title found")}</p>
+    </span>
+    <span class="meta">
+      <span class="file" title="${esc(e.filename)}">${esc(e.filename)}</span>
+    </span>
+    <span class="info" aria-hidden="true">i</span>
+  </button></li>`;
+}
+
+function renderEmpty() {
+  let html = "";
+  if (!state.entries.length && !state.running) {
+    html = `<strong>No plans yet</strong><p>Choose a folder with plans above and start the analysis.</p>`;
+  } else if (!state.entries.length && state.running) {
+    html = `<strong>Analysis running</strong><p>The first plans will appear here in a few seconds.</p>`;
+  } else if (!visible.length && hits !== null) {
+    html = `<strong>No results for “${esc($("q").value.trim())}”</strong><p>Try part of the name, e.g. “alex” instead of “Alexanderplatz Süd”.</p>`;
+  } else if (!visible.length) {
+    html = `<strong>No plans match these filters</strong><p>Choose “All” and “All plans” above.</p>`;
+  }
+  $("empty").innerHTML = html ? `<div class="empty-state">${html}</div>` : "";
+}
+
+// ---------- popup ----------
+
+function lightsHtml(field, selected) {
+  return ["green", "yellow", "red"].map((l) => `
+    <input type="radio" name="${field}-level" id="${field}-${l}" value="${l}" ${l === selected ? "checked" : ""}>
+    <label for="${field}-${l}"><span class="dot ${l}"></span>${LEVEL_WORD[l]}</label>`).join("");
+}
+
+function formState() {
+  const levels = FIELDS.map((f) => (document.querySelector(`input[name="${f}-level"]:checked`) || {}).value || "");
+  return JSON.stringify([$("f-location").value.trim(), $("f-title").value.trim(), ...levels]);
+}
+
+const isDirty = () => $("viewer").open && formState() !== formSnapshot;
+
+function confirmLeave() {
+  return !isDirty() || confirm("Discard your unsaved changes?");
+}
+
+function fillForm(e) {
+  const m = e.metadata || {};
+  const v = e.values || {};
+
+  $("d-title").textContent = v.location || e.filename;
+  $("d-status").textContent = e.review
+    ? `${STATUS_WORD[e.review_status][0].toUpperCase() + STATUS_WORD[e.review_status].slice(1)} on ${e.review.reviewed_at.replace("T", " ")}`
+    : "Not reviewed yet. Check the values against the plan and save.";
+
+  FIELDS.forEach((f) => {
+    $(`f-${f}`).value = v[f] || "";
+    $(`l-${f}`).innerHTML = lightsHtml(f, (e.levels || {})[f]);
+    const c = e[`${f}_confidence`];
+    const pct = c && c.probability != null ? `, ${Math.round(c.probability * 100)} %` : "";
+    $(`m-${f}`).innerHTML = e.error
+      ? "The model could not read this plan."
+      : m[f]
+        ? `Model read <q>${esc(m[f])}</q> (${LEVEL_WORD[lvl(c)]}${pct})`
+        : `Model found no ${f} (${LEVEL_WORD[lvl(c)]})`;
+  });
+
+  $("reset").hidden = !e.review;
+  $("saved").textContent = "";
+
+  const fields = [`<div class="field"><span class="label">File</span><p class="value">${esc(e.filename)}</p></div>`];
+  if (e.filename_flags?.length) {
+    fields.push(`<div class="field"><span class="label">Note in file name</span><p class="value">${e.filename_flags.map((f) => `<span class="tag flag">${esc(f)}</span>`).join(" ")}</p></div>`);
+  }
+  if (e.error) {
+    fields.push(`<div class="field"><span class="label">Analysis error</span><p class="value">${esc(e.error)}</p></div>`);
+  }
+  $("d-fields").innerHTML = fields.join("");
+
+  formSnapshot = formState();
+}
+
+function loadImage(e) {
+  const img = $("image");
+  const name = e.filename;
+  const url = "/api/image?file=" + encodeURIComponent(name);
+
+  $("image-pane").classList.remove("zoomed");
+  img.hidden = true;
+  $("resolution").hidden = true;
+  $("loading").hidden = false;
+  $("loading").textContent = "Loading plan …";
+
+  // 1. quick preview, 2. original resolution in the background
+  img.onload = () => { $("loading").hidden = true; img.hidden = false; };
+  img.onerror = () => { $("loading").textContent = "The plan could not be loaded."; };
+  img.alt = `Plan ${name}`;
+  img.src = url;
+
+  $("resolution").textContent = "Loading original resolution …";
+  $("resolution").hidden = false;
+
+  const full = new Image();
+  full.onload = () => {
+    if (currentName !== name) return;   // user moved on
+    img.onload = null;
+    img.src = full.src;
+    $("loading").hidden = true;
+    img.hidden = false;
+    $("resolution").textContent = `Original resolution ${full.naturalWidth} × ${full.naturalHeight} px`;
+  };
+  full.onerror = () => { if (currentName === name) $("resolution").textContent = "Original resolution not available, showing preview."; };
+  full.src = url + "&full=1";
+}
+
+function openViewer(name) {
+  const e = entryByName(name);
+  if (!e) return;
+  currentName = name;
+  fillForm(e);
+  loadImage(e);
+  updateNav();
+  if (!$("viewer").open) $("viewer").showModal();
+}
+
+function updateNav() {
+  const i = visible.findIndex((e) => e.filename === currentName);
+  $("prev").disabled = i <= 0;
+  $("next").disabled = i === -1 || i >= visible.length - 1;
+}
+
+function neighbour(step) {
+  const i = visible.findIndex((e) => e.filename === currentName);
+  return i === -1 ? null : visible[i + step]?.filename ?? null;
+}
+
+async function saveReview() {
+  const levels = Object.fromEntries(FIELDS.map((f) => [
+    `${f}_level`, (document.querySelector(`input[name="${f}-level"]:checked`) || {}).value || null,
+  ]));
+  const updated = await post("/api/review", {
+    filename: currentName,
+    location: $("f-location").value,
+    title: $("f-title").value,
+    ...levels,
+  });
+  await applyUpdate(updated);
+  $("saved").textContent = "Saved";
+}
+
+async function applyUpdate(updated) {
+  state.entries = state.entries.map((e) => (e.filename === updated.filename ? updated : e));
+  renderStatus();
+  if (hits !== null) await runSearch();   // values changed -> search again
+  else render();
+  fillForm(updated);
+  updateNav();
+}
+
+// ---------- events ----------
+
+$("folder-form").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  startAnalysis($("folder").value.trim());
+});
+
+$("pick").addEventListener("click", async () => {
+  showStatus("Choose folder", "The folder dialog is open, possibly behind the browser window.");
+  try {
+    const { folder } = await api("/api/pick-folder", { method: "POST" });
+    if (!folder) { showStatus("Choose folder", "No folder chosen."); return; }
+    $("folder").value = folder;
+    startAnalysis(folder);
+  } catch (e) {
+    showStatus("Choose folder", e.message, true);
+  }
+});
+
+$("q").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(runSearch, 150);
+});
+
+$("sort").addEventListener("change", render);
+
+$("reanalyse").addEventListener("click", () => {
+  const n = state.entries.length;
+  const minutes = Math.max(1, Math.round((n * 10) / 2 / 60));   // ~10 s per plan, 2 at a time
+  if (!confirm(
+    `Analyse all ${plural(n, "plan")} again? This takes about ${minutes} min.\n\n` +
+    "The model's values and traffic lights are overwritten. Your reviews are kept."
+  )) return;
+  startAnalysis(state.folder, "all");
+});
+$("review-filter").addEventListener("change", render);
+
+$("filters").addEventListener("click", (ev) => {
+  const chip = ev.target.closest(".chip");
+  if (!chip) return;
+  filter = chip.dataset.level;
+  render();
+});
+
+$("list").addEventListener("click", (ev) => {
+  const row = ev.target.closest(".row");
+  if (row) openViewer(row.dataset.name);
+});
+
+// Zoom: whole plan <-> original resolution, keeping the clicked point in view
+$("image").addEventListener("click", (ev) => {
+  const img = $("image");
+  const pane = $("image-pane");
+  const rect = img.getBoundingClientRect();
+  const rx = (ev.clientX - rect.left) / rect.width;
+  const ry = (ev.clientY - rect.top) / rect.height;
+  const zoomed = pane.classList.toggle("zoomed");
+  if (zoomed) {
+    pane.scrollLeft = rx * img.naturalWidth - pane.clientWidth / 2;
+    pane.scrollTop = ry * img.naturalHeight - pane.clientHeight / 2;
+  }
+});
+
+$("edit-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  try { await saveReview(); } catch (e) { $("saved").textContent = ""; alert(e.message); }
+});
+
+$("save-next").addEventListener("click", async () => {
+  const next = neighbour(1);
+  try {
+    await saveReview();
+    // the saved plan may leave the list (e.g. filter "Not reviewed"): go by name
+    const target = next && entryByName(next) ? next : neighbour(1);
+    if (target) openViewer(target);
+  } catch (e) { alert(e.message); }
+});
+
+$("reset").addEventListener("click", async () => {
+  if (!confirm("Undo the review and go back to what the model read?")) return;
+  try { await applyUpdate(await post("/api/review/reset", { filename: currentName })); } catch (e) { alert(e.message); }
+});
+
+$("prev").addEventListener("click", () => { const n = neighbour(-1); if (n && confirmLeave()) openViewer(n); });
+$("next").addEventListener("click", () => { const n = neighbour(1); if (n && confirmLeave()) openViewer(n); });
+$("close").addEventListener("click", () => { if (confirmLeave()) $("viewer").close(); });
+$("viewer").addEventListener("click", (ev) => { if (ev.target === $("viewer") && confirmLeave()) $("viewer").close(); });
+$("viewer").addEventListener("cancel", (ev) => { if (!confirmLeave()) ev.preventDefault(); });   // Esc
+
+document.addEventListener("keydown", (ev) => {
+  if (!$("viewer").open) return;
+  if (ev.target.closest("input, textarea")) return;   // typing, not browsing
+  if (ev.key === "ArrowLeft") $("prev").click();
+  if (ev.key === "ArrowRight") $("next").click();
+});
+
+refresh().catch((e) => showStatus("No connection", e.message, true));
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+.DS_Store
+.vscode/
+*.zip
+/plans
+experiments/ocr_paddleocr/paddle_output/
+__pycache__/
+# app data: contains plan content, never commit
+data/
+/docs/oriented_input.png
+# API key - never commit
+.env
+# BVG plans - never commit (also no sample plans)
+*.tif
+*.TIF
+*.tiff
+*.TIFF
+experiments/htw_connection/test_bvg.jpg
